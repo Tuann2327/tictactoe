@@ -3,12 +3,12 @@ import ReactDOM from 'react-dom';
 import axios from 'axios'
 import './index.css';
 
-function DataList(props){
+// function DataList(props){
     
-    const countries =props.countries.slice()
-    const datalist = countries.map((country) => <option key={country.CountryCode}>{country.Country}</option>)
-    return datalist
-}
+//     const countries =props.countries.slice()
+//     const datalist = countries.map((country) => <option key={country.CountryCode}>{country.Country}</option>)
+//     return datalist
+// }
 
 class SearchMenu extends Component{
     constructor(props){
@@ -17,15 +17,6 @@ class SearchMenu extends Component{
             selectedRegion: '',
         }
     }
-    
-        
-    componentDidMount() {
-    }
-    
-    
-    
-    
-
     render(){
         return(
             <div className='Search-Container'>
@@ -42,15 +33,15 @@ class SearchMenu extends Component{
                         }
                     >
                         <option disabled={true} value=''>Select Region</option>
+                        <option>Worldwide</option>
                         <option>Africa</option>
                         <option>Americas</option>
                         <option>Asia</option>
                         <option>Europe</option>
                         <option>Oceania</option>
                     </select>
-                    <select className='Search' list='country-search' placeholder='Search'>
-                        <DataList countries={this.props.countries}/>
-                    </select>
+                    <input className='Search' list='country-search' placeholder='Search' onChange={e=>this.props.searchchange(e.target.value)}>
+                    </input>
                 </div>
             </div>
         )
@@ -58,32 +49,27 @@ class SearchMenu extends Component{
     
 }
 
-function GlobalInfo(props){
-    return(
-        <div className='Container'>
-            <h1>{props.confirmed}</h1>
-            <h1>{props.recovered}</h1>
-            <h1>{props.death}</h1>
-        </div>
-    )
-}
-
 function CountriesInfo(props){
+    const txtsearched = props.searched;
     const regionarray = props.regionarray;
-    let countries = props.countries.slice();
-    if(regionarray){
-        countries = countries.filter(country => {
+    const countries = props.countries.slice();
+    let selectedCountries;
+    if(regionarray && regionarray!=='ww'){
+        selectedCountries = countries.filter(country => {
             return regionarray.includes(country.CountryCode)
         })
-    } 
-
+    }else selectedCountries = countries.slice();
+    if(txtsearched) selectedCountries = selectedCountries.filter(country =>{
+        return country.Country.toLowerCase().includes(txtsearched.toLowerCase())
+    })
     const global = props.global;
-     if(!countries || !global) return null; 
-    const listCountries = countries.map((country) =>{
+     if(!selectedCountries || !global) return null; 
+    const listCountries = selectedCountries.map((country) =>{
         const flagSrc = `https://flagcdn.com/w160/${country.CountryCode.toLowerCase()}.png`
+        
         return(
-        <div className='info-card'>
-            <img className='country-flag' src={flagSrc} />
+        <div className='info-card' key={country.CountryCode}>
+            <img className='country-flag' src={flagSrc} alt="flag"/>
             <p className='country-name'>{country.Country}</p>
             <p className='country-confirmed'>{country.TotalConfirmed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</p>
             <p className='country-deaths'>{country.TotalDeaths.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</p>
@@ -92,11 +78,11 @@ function CountriesInfo(props){
         )
         }
     )
-    
+
     const listGlobal = (global)=>{
         return(
-            <div className='info-card world-wide'>
-            <img className='country-flag' src='https://i2x.ai/wp-content/uploads/2018/01/flag-global.jpg' />
+        <div className='info-card world-wide'>
+            <img className='country-flag' src='https://i2x.ai/wp-content/uploads/2018/01/flag-global.jpg' alt='flag' />
             <p className='country-name'>Global</p>
             <p className='country-confirmed'>{global.TotalConfirmed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</p>
             <p className='country-deaths'>{global.TotalDeaths.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</p>
@@ -104,10 +90,11 @@ function CountriesInfo(props){
         </div>
         )
     }
+
     return(
         <section className='country-container'>
             <header className='sticky-card'> 
-                <SearchMenu selecthandle = {value => props.selecthandle(value)} countries={countries}/>
+                <SearchMenu selecthandle = {value => props.selecthandle(value)} searchchange= {searched => props.searchchange(searched)} countries={countries}/>
                 <div className='info-card card-title'>
                     <p className='country-title title'>Countries</p>
                     <p className='country-confirmed title'>Total Confirmed</p>
@@ -129,24 +116,31 @@ class App extends Component{
             Countries: '',
             SelectedRegion: null,
             RegionArray: null,
+            TxtSearched:'',
         }
         this.GetCovidAPI()
     }
     
     async SelectRegion(value){
-        
         await this.setState({SelectedRegion: value})
         if(this.SelectRegion){
-            const apilink = `https://restcountries.eu/rest/v2/region/${this.state.SelectedRegion}`;
-            const api = await axios.get(apilink);
-            const data = await api.data
-            const arrayData = data.map(contry => {
-                return contry.alpha2Code
-            })
-            this.setState({RegionArray: arrayData},)
-            console.log(arrayData)
+            if(this.state.SelectedRegion === 'Worldwide'){
+                this.setState({RegionArray: 'ww'},)
+            }else {
+                const apilink = `https://restcountries.eu/rest/v2/region/${this.state.SelectedRegion}`;
+                const api = await axios.get(apilink);
+                const data = await api.data
+                const arrayData = data.map(contry => {
+                    return contry.alpha2Code
+                })
+                this.setState({RegionArray: arrayData},)
+            }
         }
 
+    }
+
+    searchchange(value){
+        this.setState({TxtSearched:value})
     }
         
     componentDidMount() {
@@ -160,8 +154,6 @@ class App extends Component{
         this.setState({Countries: data.Countries,})
         const globalInfo = data.Global
         this.setState({GlobalInfo: globalInfo,})
-        console.log(this.state.Countries)
-        console.log([1,2,3,4])
     }
 
 
@@ -178,6 +170,8 @@ class App extends Component{
                     global = {this.state.GlobalInfo}
                     regionarray = {this.state.RegionArray}
                     selecthandle = {value => this.SelectRegion(value)}
+                    searchchange= {searched => this.searchchange(searched)}
+                    searched = {this.state.TxtSearched}
                 />
             </div>
             

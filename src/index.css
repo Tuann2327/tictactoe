@@ -62,9 +62,11 @@ body{
     padding: 15px 10px;
     margin: 0px;
 }
-
-.country-confirmed, .country-name, .country-title{
+.country-confirmed{
     color: #8fb7dd;
+}
+.country-name, .country-title{
+    color: #5a86b3;
 }
 .country-deaths{
     color: #DF7861;
@@ -109,7 +111,7 @@ h1{
     margin: 5px 10px;
 }
 .Region-Selector{
-    width: 100px;
+    width: 150px;
 }
 .Search{
     min-width: 150px;
@@ -122,4 +124,29 @@ h1{
 .Search::placeholder{
     font-weight: 300;
     color: #8fb7dd91;
+}
+
+@media screen and (max-width: 850px) {
+    .country-name, .country-title{
+        flex-grow: 0.5;
+        flex-shrink: 0;
+    }
+    h1{
+        box-sizing: border-box;
+        color: #5990c4;
+        width: 150px;
+    }
+}
+@media screen and (max-width: 600px) {
+    .country-name, .country-title{
+        width: 100px;
+        flex-grow: 0.25;
+        flex-shrink: 0;
+    }
+    .country-flag{
+        display: none;
+    }
+    .country-title{
+        width: 100px;
+    }
 }
